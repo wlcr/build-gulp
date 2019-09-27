@@ -3,7 +3,7 @@
 var gulp  = require('gulp'),
     gutil = require('gulp-util'),
     filter = require('gulp-filter'),
-    touch = require('gulp-touch-cmd'),
+    print = require('gulp-print').default,
     plugin = require('gulp-load-plugins')();
 
 
@@ -14,20 +14,17 @@ var gulp  = require('gulp'),
 const SOURCE = {
 	scripts: [
 		// Place custom JS here, files will be concantonated, minified if ran with --production
-		'assets/scripts/js/**/*.js',
+		'src/scripts/**/*.js',
   ],
 
 	// Scss files will be concantonated, minified if ran with --production
-	styles: 'assets/styles/scss/**/*.scss',
+	styles: 'src/styles/**/*.scss',
 };
 
 const ASSETS = {
-	styles: 'assets/styles/',
-	scripts: 'assets/scripts/',
-	images: 'assets/images/',
-  svg: 'assets/svg/',
-  svg_inline: 'assets/svg/inline',
-	all: 'assets/'
+	styles: 'dist/styles/',
+	scripts: 'dist/scripts/',
+	all: 'dist/'
 };
 
 // GULP FUNCTIONS
@@ -35,7 +32,7 @@ const ASSETS = {
 gulp.task('scripts', function() {
 
 	// Use a custom filter so we only lint custom JS
-	const CUSTOMFILTER = filter(ASSETS.scripts + 'js/**/*.js', {restore: true});
+	const CUSTOMFILTER = filter(ASSETS.scripts + '**/*.js', {restore: true});
 
 	return gulp.src(SOURCE.scripts)
 		.pipe(plugin.plumber(function(error) {
@@ -48,15 +45,11 @@ gulp.task('scripts', function() {
 			compact: true,
 			ignore: ['what-input.js']
 		}))
-		.pipe(CUSTOMFILTER)
-			.pipe(plugin.jshint(JSHINT_CONFIG))
-			.pipe(plugin.jshint.reporter('jshint-stylish'))
-			.pipe(CUSTOMFILTER.restore)
 		.pipe(plugin.concat('scripts.js'))
 		.pipe(plugin.uglify())
 		.pipe(plugin.sourcemaps.write('.')) // Creates sourcemap for minified JS
 		.pipe(gulp.dest(ASSETS.scripts))
-		.pipe(touch());
+    .pipe(print(function() { return 'Scripts Complete.'; }));
 });
 
 // Compile Sass, Autoprefix and minify
@@ -72,30 +65,14 @@ gulp.task('styles', function() {
 		    browsers: [
 		    	'last 2 versions',
 		    	'ie >= 9',
-				'ios >= 7'
+  				'ios >= 7'
 		    ],
 		    cascade: false
 		}))
 		.pipe(plugin.cssnano({safe: true, minifyFontValues: {removeQuotes: false}}))
 		.pipe(plugin.sourcemaps.write('.'))
 		.pipe(gulp.dest(ASSETS.styles))
-    .pipe(browserSync.reload({
-      stream: true
-    }))
-		.pipe(touch());
-});
-
-// Browser-Sync watch files and inject changes
-gulp.task('browsersync', function() {
-
-  // Watch these files
-  var files = [
-  	SOURCE.php,
-  ];
-
-  gulp.watch(SOURCE.styles, gulp.parallel('styles'));
-  gulp.watch(SOURCE.scripts, gulp.parallel('scripts')).on('change', browserSync.reload);
-
+    .pipe(print(function() { return 'Styles Complete.'; }));
 });
 
 // Watch files for changes (without Browser-Sync)
